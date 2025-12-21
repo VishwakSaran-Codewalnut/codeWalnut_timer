@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Trash2, RotateCcw, Pencil } from 'lucide-react';
 import { Timer } from '../types/timer';
 import { formatTime } from '../utils/time';
@@ -78,6 +78,18 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
     toggleTimer(timer.id);
   };
 
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const progress = useMemo(() => {
+    return (remainingTime / timer.duration) * 100;
+  }, [remainingTime, timer.duration]);
+
   return (
     <>
       <div className="relative bg-white rounded-xl shadow-lg p-6 transition-transform hover:scale-102 overflow-hidden">
@@ -101,7 +113,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={() => setIsEditModalOpen(true)}
+                onClick={handleEditClick}
                 className="p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors"
                 variant="unstyled"
                 title="Edit Timer"
@@ -133,9 +145,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
               {formatTime(remainingTime)}
             </div>
 
-            <TimerProgress
-              progress={(remainingTime / timer.duration) * 100}
-            />
+            <TimerProgress progress={progress} />
 
             <TimerControls
               isRunning={timer.isRunning}
@@ -150,7 +160,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
 
       <TimerModal
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={handleEditModalClose}
         timer={timer}
       />
 

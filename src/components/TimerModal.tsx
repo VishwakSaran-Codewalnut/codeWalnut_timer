@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useCallback, useMemo } from 'react';
 import { X, Clock } from 'lucide-react';
 import { Button } from './shared/Button';
 import { Timer } from '../types/timer';
@@ -43,8 +43,7 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
     // Timer store actions
     const { addTimer, editTimer } = useTimerStore();
 
-    // Helper to reset all fields
-    const resetForm = () => {
+    const resetForm = useCallback(() => {
         setTitle('');
         setDescription('');
         setHours(0);
@@ -57,7 +56,7 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
             seconds: false,
         });
         setFormErrorMessage(null);
-    };
+    }, []);
 
     // Reset form fields whenever the modal opens/closes or when switching timers
     useEffect(() => {
@@ -82,9 +81,20 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                 resetForm();
             }
         }
-    }, [isOpen, isEditing, timer]);
+    }, [isOpen, isEditing, timer, resetForm]);
 
-    if (!isOpen) return null;
+    const isTimeValid = useMemo(() => {
+        return hours > 0 || minutes > 0 || seconds > 0;
+    }, [hours, minutes, seconds]);
+
+    const isTitleValid = useMemo(() => {
+        return title.trim().length > 0 && title.length <= 50;
+    }, [title]);
+
+    const handleClose = (): void => {
+        onClose();
+        resetForm();
+    };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
@@ -122,15 +132,7 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
         handleClose();
     };
 
-    const handleClose = (): void => {
-        onClose();
-        // Also reset form on close, to be completely sure
-        resetForm();
-    };
-
-    // Validation checks
-    const isTimeValid = hours > 0 || minutes > 0 || seconds > 0;
-    const isTitleValid = title.trim().length > 0 && title.length <= 50;
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
