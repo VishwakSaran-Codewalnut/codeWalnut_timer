@@ -175,8 +175,8 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                             }
                             maxLength={50}
                             className={`w-full px-3 py-2 border ${touched.title && !isTitleValid
-                                    ? 'border-red-500 focus:ring-red-500'
-                                    : 'border-gray-300 focus:ring-blue-500'
+                                ? 'border-red-500 focus:ring-red-500'
+                                : 'border-gray-300 focus:ring-blue-500'
                                 } rounded-md shadow-sm focus:outline-none focus:ring-2`}
                             placeholder="Enter timer title"
                         />
