@@ -1,14 +1,18 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import Home from './Home.tsx';
-import { Provider } from 'react-redux';
-import { store } from './store/useTimerStore.ts';
-import './index.css';
+import Home from "./Home.tsx";
+import { store } from "./store/useTimerStore.ts";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Provider store={store}>
-      <Home />
-    </Provider>
-  </StrictMode>
-);
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { Provider } from "react-redux";
+import "./index.css";
+
+const rootElement = document.getElementById("root");
+if (rootElement) {
+	createRoot(rootElement).render(
+		<StrictMode>
+			<Provider store={store}>
+				<Home />
+			</Provider>
+		</StrictMode>,
+	);
+}
