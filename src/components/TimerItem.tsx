@@ -14,7 +14,7 @@ interface TimerItemProps {
   timer: Timer;
 }
 
-export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
+export const TimerItem: React.FC<TimerItemProps> = React.memo(({ timer }) => {
   const { toggleTimer, deleteTimer, restartTimer } = useTimerStore();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const intervalRef = useRef<number | null>(null);
@@ -60,23 +60,27 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
     };
   }, [timer.isRunning, timerAudio, timer.title]);
 
-  const handleRestart = () => {
+  const handleRestart = React.useCallback(() => {
     hasEndedRef.current = false;
     setRemainingTime(timer.duration);
     restartTimer(timer.id);
-  };
+  }, [timer.duration, timer.id, restartTimer]);
 
-  const handleDelete = () => {
+  const handleDelete = React.useCallback(() => {
     timerAudio.stop();
     deleteTimer(timer.id);
-  };
+  }, [timer.id, deleteTimer, timerAudio]);
 
-  const handleToggle = () => {
+  const handleToggle = React.useCallback(() => {
     if (remainingTime <= 0) {
       hasEndedRef.current = false;
     }
     toggleTimer(timer.id);
-  };
+  }, [remainingTime, timer.id, toggleTimer]);
+
+  const EDIT_BUTTON_CLASS = "p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors";
+  const RESTART_BUTTON_CLASS = "p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors";
+  const DELETE_BUTTON_CLASS = "p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors";
 
   return (
     <>
@@ -102,27 +106,30 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
             <div className="flex gap-2">
               <Button
                 onClick={() => setIsEditModalOpen(true)}
-                className="p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors"
+                className={EDIT_BUTTON_CLASS}
                 variant="unstyled"
                 title="Edit Timer"
+                aria-label="Edit Timer"
               >
                 <Pencil className="w-5 h-5" />
               </Button>
 
               <Button
                 onClick={handleRestart}
-                className="p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors"
+                className={RESTART_BUTTON_CLASS}
                 variant="unstyled"
                 title="Restart Timer"
+                aria-label="Restart Timer"
               >
                 <RotateCcw className="w-5 h-5" />
               </Button>
 
               <Button
                 onClick={handleDelete}
-                className="p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                className={DELETE_BUTTON_CLASS}
                 variant="unstyled"
                 title="Delete Timer"
+                aria-label="Delete Timer"
               >
                 <Trash2 className="w-5 h-5" />
               </Button>
@@ -140,13 +147,13 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
             <TimerControls
               isRunning={timer.isRunning}
               remainingTime={remainingTime}
-              duration={timer.duration}
               onToggle={handleToggle}
               onRestart={handleRestart}
             />
           </div>
         </div>
       </div>
+
 
       <TimerModal
         isOpen={isEditModalOpen}
@@ -156,4 +163,4 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
 
     </>
   );
-};
+});
