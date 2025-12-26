@@ -1,9 +1,10 @@
-import React, { FC, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { X, Clock } from 'lucide-react';
 import { Button } from './shared/Button';
 import { Timer } from '../types/timer';
 import { useTimerStore } from '../store/useTimerStore';
-import { validateTimerForm } from '../utils/validation';
+import { validateTimerForm, validateTimerDurationState } from '../utils/validation';
+import { calculateTotalSecondsFromHoursMinutesSeconds, convertSecondsToHoursMinutesSeconds } from '../utils/time';
 
 interface TimerModalProps {
     /** Controls whether the modal is open or not */
@@ -14,18 +15,18 @@ interface TimerModalProps {
     timer?: Timer;
 }
 
-export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
-    const isEditing = Boolean(timer);
+export const TimerModal = ({ isOpen, onClose, timer }: TimerModalProps) => {
+    const isEditingExistingTimer = Boolean(timer);
 
     // State for form fields
-    const [title, setTitle] = useState<string>('');
-    const [description, setDescription] = useState<string>('');
-    const [hours, setHours] = useState<number>(0);
-    const [minutes, setMinutes] = useState<number>(0);
-    const [seconds, setSeconds] = useState<number>(0);
+    const [timerTitleInput, setTimerTitleInput] = useState<string>('');
+    const [timerDescriptionInput, setTimerDescriptionInput] = useState<string>('');
+    const [timerDurationHours, setTimerDurationHours] = useState<number>(0);
+    const [timerDurationMinutes, setTimerDurationMinutes] = useState<number>(0);
+    const [timerDurationSeconds, setTimerDurationSeconds] = useState<number>(0);
 
     // Track "touched" fields to trigger validation messages
-    const [touched, setTouched] = useState<{
+    const [touchedFormFields, setTouchedFormFields] = useState<{
         title: boolean;
         hours: boolean;
         minutes: boolean;
@@ -38,39 +39,40 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
     });
 
     // For top-level error message
-    const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null);
+    const [formSubmissionErrorMessage, setFormSubmissionErrorMessage] = useState<string | null>(null);
 
     // Timer store actions
     const { addTimer, editTimer } = useTimerStore();
 
-    const resetForm = useCallback(() => {
-        setTitle('');
-        setDescription('');
-        setHours(0);
-        setMinutes(0);
-        setSeconds(0);
-        setTouched({
+    const resetTimerForm = useCallback(() => {
+        setTimerTitleInput('');
+        setTimerDescriptionInput('');
+        setTimerDurationHours(0);
+        setTimerDurationMinutes(0);
+        setTimerDurationSeconds(0);
+        setTouchedFormFields({
             title: false,
             hours: false,
             minutes: false,
             seconds: false,
         });
-        setFormErrorMessage(null);
+        setFormSubmissionErrorMessage(null);
     }, []);
 
     // Reset form fields whenever the modal opens/closes or when switching timers
     useEffect(() => {
         if (isOpen) {
             // If editing, populate fields from existing timer
-            if (isEditing && timer) {
-                setTitle(timer.title);
-                setDescription(timer.description);
-                setHours(Math.floor(timer.duration / 3600));
-                setMinutes(Math.floor((timer.duration % 3600) / 60));
-                setSeconds(timer.duration % 60);
+            if (isEditingExistingTimer && timer) {
+                setTimerTitleInput(timer.title);
+                setTimerDescriptionInput(timer.description);
+                const { hours: initialHours, minutes: initialMinutes, seconds: initialSeconds } = convertSecondsToHoursMinutesSeconds(timer.duration);
+                setTimerDurationHours(initialHours);
+                setTimerDurationMinutes(initialMinutes);
+                setTimerDurationSeconds(initialSeconds);
                 // Clear any previous errors
-                setFormErrorMessage(null);
-                setTouched({
+                setFormSubmissionErrorMessage(null);
+                setTouchedFormFields({
                     title: false,
                     hours: false,
                     minutes: false,
@@ -78,58 +80,53 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                 });
             } else {
                 // New timer: start with empty fields
-                resetForm();
+                resetTimerForm();
             }
         }
-    }, [isOpen, isEditing, timer, resetForm]);
+    }, [isOpen, isEditingExistingTimer, timer, resetTimerForm]);
 
-    const isTimeValid = useMemo(() => {
-        return hours > 0 || minutes > 0 || seconds > 0;
-    }, [hours, minutes, seconds]);
+    const isTimerDurationValid = validateTimerDurationState(timerDurationHours, timerDurationMinutes, timerDurationSeconds);
+    const isTimerTitleValid = timerTitleInput.trim().length > 0;
 
-    const isTitleValid = useMemo(() => {
-        return title.trim().length > 0 && title.trim().length <= 50;
-    }, [title]);
-
-    const handleClose = (): void => {
+    const handleCloseTimerModal = (): void => {
         onClose();
-        resetForm();
+        resetTimerForm();
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    const handleTimerFormSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
 
         // Validate form fields
-        const isFormValid = validateTimerForm({ title, description, hours, minutes, seconds });
+        const isFormValid = validateTimerForm({ title: timerTitleInput, description: timerDescriptionInput, hours: timerDurationHours, minutes: timerDurationMinutes, seconds: timerDurationSeconds });
         if (!isFormValid) {
-            setFormErrorMessage('Please fix the highlighted fields before submitting.');
+            setFormSubmissionErrorMessage('Please fix the highlighted fields before submitting.');
             return;
         }
 
-        const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+        const totalSeconds = calculateTotalSecondsFromHoursMinutesSeconds(timerDurationHours, timerDurationMinutes, timerDurationSeconds);
 
-        if (isEditing && timer) {
+        if (isEditingExistingTimer && timer) {
             // Editing an existing timer
             editTimer(timer.id, {
-                title: title.trim(),
-                description: description.trim(),
+                title: timerTitleInput.trim(),
+                description: timerDescriptionInput.trim(),
                 duration: totalSeconds,
             });
 
             // Reset immediately after successful edit
-            resetForm();
+            resetTimerForm();
         } else {
             // Creating a new timer
             addTimer({
-                title: title.trim(),
-                description: description.trim(),
+                title: timerTitleInput.trim(),
+                description: timerDescriptionInput.trim(),
                 duration: totalSeconds,
                 remainingTime: totalSeconds,
                 isRunning: false,
             });
         }
 
-        handleClose();
+        handleCloseTimerModal();
     };
 
     if (!isOpen) return null;
@@ -142,11 +139,11 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                     <div className="flex items-center gap-2">
                         <Clock className="w-5 h-5 text-blue-600" />
                         <h2 className="text-xl font-semibold">
-                            {isEditing ? 'Edit Timer' : 'Add New Timer'}
+                            {isEditingExistingTimer ? 'Edit Timer' : 'Add New Timer'}
                         </h2>
                     </div>
                     <Button
-                        onClick={handleClose}
+                        onClick={handleCloseTimerModal}
                         variant="unstyled"
                         className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                     >
@@ -155,14 +152,14 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                 </div>
 
                 {/* Top-level error message */}
-                {formErrorMessage && (
+                {formSubmissionErrorMessage && (
                     <div className="mb-4 text-sm font-medium text-red-600">
-                        {formErrorMessage}
+                        {formSubmissionErrorMessage}
                     </div>
                 )}
 
                 {/* Modal Form */}
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleTimerFormSubmit} className="space-y-6">
                     {/* Title Input */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -170,26 +167,22 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                         </label>
                         <input
                             type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            value={timerTitleInput}
+                            onChange={(e) => setTimerTitleInput(e.target.value)}
                             onBlur={() =>
-                                setTouched((prev) => ({ ...prev, title: true }))
+                                setTouchedFormFields((prev) => ({ ...prev, title: true }))
                             }
-                            maxLength={50}
-                            className={`w-full px-3 py-2 border ${touched.title && !isTitleValid
+                            className={`w-full px-3 py-2 border ${touchedFormFields.title && !isTimerTitleValid
                                 ? 'border-red-500 focus:ring-red-500'
                                 : 'border-gray-300 focus:ring-blue-500'
                                 } rounded-md shadow-sm focus:outline-none focus:ring-2`}
                             placeholder="Enter timer title"
                         />
-                        {touched.title && !isTitleValid && (
+                        {touchedFormFields.title && !isTimerTitleValid && (
                             <p className="mt-1 text-sm text-red-500">
-                                Title is required and must be less than 50 characters
+                                Title is required
                             </p>
                         )}
-                        <p className="mt-1 text-sm text-gray-500">
-                            {title.length}/50 characters
-                        </p>
                     </div>
 
                     {/* Description Input */}
@@ -198,8 +191,8 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                             Description
                         </label>
                         <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                            value={timerDescriptionInput}
+                            onChange={(e) => setTimerDescriptionInput(e.target.value)}
                             rows={3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter timer description (optional)"
@@ -220,12 +213,12 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                                     type="number"
                                     min={0}
                                     max={23}
-                                    value={hours}
+                                    value={timerDurationHours}
                                     onChange={(e) =>
-                                        setHours(Math.min(23, parseInt(e.target.value, 10) || 0))
+                                        setTimerDurationHours(Math.min(23, parseInt(e.target.value, 10) || 0))
                                     }
                                     onBlur={() =>
-                                        setTouched((prev) => ({ ...prev, hours: true }))
+                                        setTouchedFormFields((prev) => ({ ...prev, hours: true }))
                                     }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
@@ -238,12 +231,12 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                                     type="number"
                                     min={0}
                                     max={59}
-                                    value={minutes}
+                                    value={timerDurationMinutes}
                                     onChange={(e) =>
-                                        setMinutes(Math.min(59, parseInt(e.target.value, 10) || 0))
+                                        setTimerDurationMinutes(Math.min(59, parseInt(e.target.value, 10) || 0))
                                     }
                                     onBlur={() =>
-                                        setTouched((prev) => ({ ...prev, minutes: true }))
+                                        setTouchedFormFields((prev) => ({ ...prev, minutes: true }))
                                     }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
@@ -256,18 +249,18 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
                                     type="number"
                                     min={0}
                                     max={59}
-                                    value={seconds}
+                                    value={timerDurationSeconds}
                                     onChange={(e) =>
-                                        setSeconds(Math.min(59, parseInt(e.target.value, 10) || 0))
+                                        setTimerDurationSeconds(Math.min(59, parseInt(e.target.value, 10) || 0))
                                     }
                                     onBlur={() =>
-                                        setTouched((prev) => ({ ...prev, seconds: true }))
+                                        setTouchedFormFields((prev) => ({ ...prev, seconds: true }))
                                     }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                         </div>
-                        {touched.hours && touched.minutes && touched.seconds && !isTimeValid && (
+                        {touchedFormFields.hours && touchedFormFields.minutes && touchedFormFields.seconds && !isTimerDurationValid && (
                             <p className="mt-2 text-sm text-red-500">
                                 Please set a duration greater than 0
                             </p>
@@ -276,10 +269,10 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
 
                     {/* Form Buttons */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
-                        <Button label="Cancel" onClick={handleClose} variant="secondary" />
+                        <Button label="Cancel" onClick={handleCloseTimerModal} variant="secondary" />
                         {/* Not disabling the button, so user can see error message if invalid */}
                         <Button
-                            label={isEditing ? 'Save Changes' : 'Add Timer'}
+                            label={isEditingExistingTimer ? 'Save Changes' : 'Add Timer'}
                             type="submit"
                             variant="primary"
                         />

@@ -5,10 +5,11 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { TimerModal } from '../../src/components/TimerModal';
 import { Timer } from '../../src/types/timer';
-import { validateTimerForm } from '../../src/utils/validation';
+import { validateTimerForm, validateTimerDurationState } from '../../src/utils/validation';
 
 vi.mock('../../src/utils/validation', () => ({
   validateTimerForm: vi.fn(),
+  validateTimerDurationState: vi.fn(),
 }));
 
 const createTestStore = () => {
@@ -56,43 +57,44 @@ const renderModal = (
   );
 };
 
+const mockTimer: Timer = {
+  id: 'timer-1',
+  title: 'Existing Timer',
+  description: 'Description',
+  duration: 120,
+  remainingTime: 120,
+  isRunning: false,
+  createdAt: Date.now(),
+};
+
 describe('TimerModal', () => {
   const mockOnClose = vi.fn();
+  let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(validateTimerForm).mockReturnValue(true);
+    vi.mocked(validateTimerDurationState).mockReturnValue(true);
+    user = userEvent.setup();
   });
 
   describe('Modal Visibility', () => {
     it('does not render when isOpen is false', () => {
       renderModal(false, mockOnClose);
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       expect(screen.queryByText('Add New Timer')).not.toBeInTheDocument();
-      expect(screen.queryByText('Edit Timer')).not.toBeInTheDocument();
     });
 
-    it('renders when isOpen is true', () => {
+    it('renders "Add New Timer" mode by default', () => {
       renderModal(true, mockOnClose);
       expect(screen.getByText('Add New Timer')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add timer/i })).toBeInTheDocument();
     });
 
-    it('shows "Add New Timer" title when no timer is provided', () => {
-      renderModal(true, mockOnClose);
-      expect(screen.getByText('Add New Timer')).toBeInTheDocument();
-    });
-
-    it('shows "Edit Timer" title when timer is provided', () => {
-      const timer: Timer = {
-        id: 'timer-1',
-        title: 'Existing Timer',
-        description: 'Description',
-        duration: 120,
-        remainingTime: 120,
-        isRunning: false,
-        createdAt: Date.now(),
-      };
-      renderModal(true, mockOnClose, timer);
+    it('renders "Edit Timer" mode when a timer is provided', () => {
+      renderModal(true, mockOnClose, mockTimer);
       expect(screen.getByText('Edit Timer')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
     });
   });
 
@@ -109,7 +111,6 @@ describe('TimerModal', () => {
     });
 
     it('allows user to enter title', async () => {
-      const user = userEvent.setup();
       renderModal(true, mockOnClose);
 
       const titleInput = screen.getByPlaceholderText('Enter timer title');
@@ -119,7 +120,6 @@ describe('TimerModal', () => {
     });
 
     it('allows user to enter description', async () => {
-      const user = userEvent.setup();
       renderModal(true, mockOnClose);
 
       const descriptionInput = screen.getByPlaceholderText('Enter timer description (optional)');
@@ -129,7 +129,6 @@ describe('TimerModal', () => {
     });
 
     it('allows user to set hours, minutes, and seconds', async () => {
-      const user = userEvent.setup();
       const { container } = renderModal(true, mockOnClose);
 
       const inputs = container.querySelectorAll('input[type="number"]');
@@ -150,7 +149,6 @@ describe('TimerModal', () => {
     });
 
     it('limits hours to maximum of 23', async () => {
-      const user = userEvent.setup();
       const { container } = renderModal(true, mockOnClose);
 
       const inputs = container.querySelectorAll('input[type="number"]');
@@ -162,7 +160,6 @@ describe('TimerModal', () => {
     });
 
     it('limits minutes to maximum of 59', async () => {
-      const user = userEvent.setup();
       const { container } = renderModal(true, mockOnClose);
 
       const inputs = container.querySelectorAll('input[type="number"]');
@@ -174,7 +171,6 @@ describe('TimerModal', () => {
     });
 
     it('limits seconds to maximum of 59', async () => {
-      const user = userEvent.setup();
       const { container } = renderModal(true, mockOnClose);
 
       const inputs = container.querySelectorAll('input[type="number"]');
@@ -188,17 +184,15 @@ describe('TimerModal', () => {
 
   describe('Form Fields - Edit Mode', () => {
     it('pre-fills form fields with existing timer data', () => {
-      const timer: Timer = {
-        id: 'timer-1',
+      // Need a timer with specific values for this test to match expectations
+      const editTimer: Timer = {
+        ...mockTimer,
         title: 'Existing Timer',
         description: 'Existing Description',
         duration: 3665,
-        remainingTime: 3665,
-        isRunning: false,
-        createdAt: Date.now(),
       };
 
-      const { container } = renderModal(true, mockOnClose, timer);
+      const { container } = renderModal(true, mockOnClose, editTimer);
 
       expect(screen.getByDisplayValue('Existing Timer')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Existing Description')).toBeInTheDocument();
@@ -210,18 +204,7 @@ describe('TimerModal', () => {
   });
 
   describe('Form Validation', () => {
-    it('shows character count for title', async () => {
-      const user = userEvent.setup();
-      renderModal(true, mockOnClose);
-
-      const titleInput = screen.getByPlaceholderText('Enter timer title');
-      await user.type(titleInput, 'Test');
-
-      expect(screen.getByText('4/50 characters')).toBeInTheDocument();
-    });
-
     it('shows validation error when title is touched and invalid', async () => {
-      const user = userEvent.setup();
       renderModal(true, mockOnClose);
 
       const titleInput = screen.getByPlaceholderText('Enter timer title');
@@ -229,13 +212,13 @@ describe('TimerModal', () => {
       await user.tab();
       await waitFor(() => {
         expect(
-          screen.getByText('Title is required and must be less than 50 characters')
+          screen.getByText('Title is required')
         ).toBeInTheDocument();
       });
     });
 
     it('shows validation error when time fields are touched and invalid', async () => {
-      const user = userEvent.setup();
+      vi.mocked(validateTimerDurationState).mockReturnValue(false);
       const { container } = renderModal(true, mockOnClose);
 
       const inputs = container.querySelectorAll('input[type="number"]');
@@ -258,7 +241,6 @@ describe('TimerModal', () => {
     });
 
     it('shows error message when form validation fails on submit', async () => {
-      const user = userEvent.setup();
       vi.mocked(validateTimerForm).mockReturnValue(false);
       renderModal(true, mockOnClose);
 
@@ -275,7 +257,6 @@ describe('TimerModal', () => {
 
   describe('Form Submission - Add Mode', () => {
     it('calls addTimer when form is submitted with valid data', async () => {
-      const user = userEvent.setup();
       const store = createTestStore();
       const { container } = renderModal(true, mockOnClose, undefined, store);
 
@@ -298,7 +279,6 @@ describe('TimerModal', () => {
     });
 
     it('closes modal after successful submission', async () => {
-      const user = userEvent.setup();
       const { container } = renderModal(true, mockOnClose);
 
       await user.type(screen.getByPlaceholderText('Enter timer title'), 'New Timer');
@@ -318,19 +298,15 @@ describe('TimerModal', () => {
 
   describe('Form Submission - Edit Mode', () => {
     it('calls editTimer when form is submitted with valid data', async () => {
-      const user = userEvent.setup();
-      const timer: Timer = {
-        id: 'timer-1',
+      const editTimer: Timer = {
+        ...mockTimer,
         title: 'Original Timer',
         description: 'Original Description',
         duration: 60,
-        remainingTime: 60,
-        isRunning: false,
-        createdAt: Date.now(),
       };
 
       const store = createTestStore();
-      renderModal(true, mockOnClose, timer, store);
+      renderModal(true, mockOnClose, editTimer, store);
 
       const titleInput = screen.getByDisplayValue('Original Timer');
       await user.clear(titleInput);
@@ -347,7 +323,6 @@ describe('TimerModal', () => {
 
   describe('Modal Close', () => {
     it('calls onClose when cancel button is clicked', async () => {
-      const user = userEvent.setup();
       renderModal(true, mockOnClose);
 
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
@@ -357,7 +332,6 @@ describe('TimerModal', () => {
     });
 
     it('calls onClose when X button is clicked', async () => {
-      const user = userEvent.setup();
       renderModal(true, mockOnClose);
 
       const closeButtons = screen.getAllByRole('button');

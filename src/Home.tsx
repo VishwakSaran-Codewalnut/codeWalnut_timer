@@ -6,39 +6,35 @@ import { Button } from './components/shared/Button';
 import { TimerModal } from './components/TimerModal';
 
 function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [toasterPosition, setToasterPosition] = useState<'top-right' | 'bottom-center'>(
+  const [isAddTimerModalOpen, setIsAddTimerModalOpen] = useState(false);
+  const [toastNotificationPosition, setToastNotificationPosition] = useState<'top-right' | 'bottom-center'>(
     'top-right'
   );
 
-  const handleResize = useCallback(() => {
+  const handleToastPositionOnResize = useCallback(() => {
     if (window.innerWidth <= 768) {
-      setToasterPosition('bottom-center'); // Mobile
+      setToastNotificationPosition('bottom-center'); // Mobile
     } else {
-      setToasterPosition('top-right'); // Desktop
+      setToastNotificationPosition('top-right'); // Desktop
     }
   }, []);
 
   useEffect(() => {
-    handleResize(); // Set initial position
-    window.addEventListener('resize', handleResize);
+    handleToastPositionOnResize(); // Set initial position
+    window.addEventListener('resize', handleToastPositionOnResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', handleToastPositionOnResize);
     };
-  }, [handleResize]);
+  }, [handleToastPositionOnResize]);
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleToggleAddTimerModal = () => {
+    setIsAddTimerModalOpen((prev) => !prev);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Toaster position={toasterPosition} />
+      <Toaster position={toastNotificationPosition} />
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           {/* Timer Title */}
@@ -49,7 +45,7 @@ function Home() {
 
           {/* Add Timer Button */}
           <Button
-            onClick={handleOpenModal}
+            onClick={handleToggleAddTimerModal}
             variant="primary"
           >
             <Plus className="w-5 h-5" />
@@ -60,8 +56,8 @@ function Home() {
         <TimerList />
 
         <TimerModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
+          isOpen={isAddTimerModalOpen}
+          onClose={handleToggleAddTimerModal}
         />
       </div>
     </div>

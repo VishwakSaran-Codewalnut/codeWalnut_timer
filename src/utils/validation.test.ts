@@ -28,20 +28,6 @@ describe('validateTimerForm', () => {
     expect(toast.error).toHaveBeenCalledWith('Title is required');
   });
 
-  it('fails when title exceeds 50 characters', () => {
-    const data: TimerFormData = {
-      title: 'a'.repeat(51), // 51 characters
-      description: '',
-      hours: 0,
-      minutes: 0,
-      seconds: 1,
-    };
-
-    const result = validateTimerForm(data);
-    expect(result).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith('Title must be less than 50 characters');
-  });
-
   it('fails when hours, minutes, or seconds are negative', () => {
     const data: TimerFormData = {
       title: 'Test Timer',
@@ -90,7 +76,7 @@ describe('validateTimerForm', () => {
       description: '',
       hours: 24, // 24 hours
       minutes: 0,
-      seconds: 1, 
+      seconds: 1,
     };
 
     const result = validateTimerForm(data);

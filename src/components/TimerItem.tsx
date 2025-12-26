@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Trash2, RotateCcw, Pencil } from 'lucide-react';
 import { Timer } from '../types/timer';
-import { formatTime } from '../utils/time';
+import { formatTimeSecondsToDisplayString } from '../utils/time';
 import { useTimerStore } from '../store/useTimerStore';
 import { toast } from 'sonner';
 import { TimerAudio } from '../utils/audio';
@@ -16,7 +16,7 @@ interface TimerItemProps {
 
 export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
   const { toggleTimer, deleteTimer, restartTimer } = useTimerStore();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditTimerModalOpen, setIsEditTimerModalOpen] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const timerAudio = TimerAudio.getInstance();
   const hasEndedRef = useRef(false);
@@ -60,35 +60,33 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
     };
   }, [timer.isRunning, timerAudio, timer.title]);
 
-  const handleRestart = () => {
+  const handleRestartTimerClick = () => {
     hasEndedRef.current = false;
     setRemainingTime(timer.duration);
     restartTimer(timer.id);
   };
 
-  const handleDelete = () => {
+  const handleDeleteTimerClick = () => {
     timerAudio.stop();
     deleteTimer(timer.id);
   };
 
-  const handleToggle = () => {
+  const handleToggleTimerClick = () => {
     if (remainingTime <= 0) {
       hasEndedRef.current = false;
     }
     toggleTimer(timer.id);
   };
 
-  const handleEditClick = () => {
-    setIsEditModalOpen(true);
+  const handleEditTimerClick = () => {
+    setIsEditTimerModalOpen(true);
   };
 
-  const handleEditModalClose = () => {
-    setIsEditModalOpen(false);
+  const handleCloseEditTimerModal = () => {
+    setIsEditTimerModalOpen(false);
   };
 
-  const progress = useMemo(() => {
-    return (remainingTime / timer.duration) * 100;
-  }, [remainingTime, timer.duration]);
+  const progress = (remainingTime / timer.duration) * 100;
 
   return (
     <>
@@ -113,7 +111,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={handleEditClick}
+                onClick={handleEditTimerClick}
                 className="p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors"
                 variant="unstyled"
                 title="Edit Timer"
@@ -122,7 +120,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
               </Button>
 
               <Button
-                onClick={handleRestart}
+                onClick={handleRestartTimerClick}
                 className="p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors"
                 variant="unstyled"
                 title="Restart Timer"
@@ -131,7 +129,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
               </Button>
 
               <Button
-                onClick={handleDelete}
+                onClick={handleDeleteTimerClick}
                 className="p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors"
                 variant="unstyled"
                 title="Delete Timer"
@@ -142,7 +140,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
           </div>
           <div className="flex flex-col items-center mt-6">
             <div className="text-4xl font-mono font-bold text-gray-800 mb-4">
-              {formatTime(remainingTime)}
+              {formatTimeSecondsToDisplayString(remainingTime)}
             </div>
 
             <TimerProgress progress={progress} />
@@ -151,16 +149,16 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
               isRunning={timer.isRunning}
               remainingTime={remainingTime}
               duration={timer.duration}
-              onToggle={handleToggle}
-              onRestart={handleRestart}
+              onToggle={handleToggleTimerClick}
+              onRestart={handleRestartTimerClick}
             />
           </div>
         </div>
       </div>
 
       <TimerModal
-        isOpen={isEditModalOpen}
-        onClose={handleEditModalClose}
+        isOpen={isEditTimerModalOpen}
+        onClose={handleCloseEditTimerModal}
         timer={timer}
       />
 
