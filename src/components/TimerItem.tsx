@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Trash2, RotateCcw, Pencil } from 'lucide-react';
 import { Timer } from '../types/timer';
 import { formatTime } from '../utils/time';
@@ -14,7 +14,7 @@ interface TimerItemProps {
   timer: Timer;
 }
 
-export const TimerItem: React.FC<TimerItemProps> = React.memo(({ timer }) => {
+export const TimerItem = ({ timer }: TimerItemProps) => {
   const { toggleTimer, deleteTimer, restartTimer } = useTimerStore();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const intervalRef = useRef<number | null>(null);
@@ -60,27 +60,25 @@ export const TimerItem: React.FC<TimerItemProps> = React.memo(({ timer }) => {
     };
   }, [timer.isRunning, timerAudio, timer.title]);
 
-  const handleRestart = React.useCallback(() => {
+  const handleRestart = useCallback(() => {
     hasEndedRef.current = false;
     setRemainingTime(timer.duration);
     restartTimer(timer.id);
   }, [timer.duration, timer.id, restartTimer]);
 
-  const handleDelete = React.useCallback(() => {
+  const handleDelete = useCallback(() => {
     timerAudio.stop();
     deleteTimer(timer.id);
   }, [timer.id, deleteTimer, timerAudio]);
 
-  const handleToggle = React.useCallback(() => {
+  const handleToggle = useCallback(() => {
     if (remainingTime <= 0) {
       hasEndedRef.current = false;
     }
     toggleTimer(timer.id);
   }, [remainingTime, timer.id, toggleTimer]);
 
-  const EDIT_BUTTON_CLASS = "p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors";
-  const RESTART_BUTTON_CLASS = "p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors";
-  const DELETE_BUTTON_CLASS = "p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors";
+
 
   return (
     <>
@@ -106,7 +104,7 @@ export const TimerItem: React.FC<TimerItemProps> = React.memo(({ timer }) => {
             <div className="flex gap-2">
               <Button
                 onClick={() => setIsEditModalOpen(true)}
-                className={EDIT_BUTTON_CLASS}
+                className="p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors"
                 variant="unstyled"
                 title="Edit Timer"
                 aria-label="Edit Timer"
@@ -116,7 +114,7 @@ export const TimerItem: React.FC<TimerItemProps> = React.memo(({ timer }) => {
 
               <Button
                 onClick={handleRestart}
-                className={RESTART_BUTTON_CLASS}
+                className="p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors"
                 variant="unstyled"
                 title="Restart Timer"
                 aria-label="Restart Timer"
@@ -126,7 +124,7 @@ export const TimerItem: React.FC<TimerItemProps> = React.memo(({ timer }) => {
 
               <Button
                 onClick={handleDelete}
-                className={DELETE_BUTTON_CLASS}
+                className="p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors"
                 variant="unstyled"
                 title="Delete Timer"
                 aria-label="Delete Timer"
@@ -163,4 +161,4 @@ export const TimerItem: React.FC<TimerItemProps> = React.memo(({ timer }) => {
 
     </>
   );
-});
+};

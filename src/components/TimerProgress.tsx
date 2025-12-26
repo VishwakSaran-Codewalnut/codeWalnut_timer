@@ -1,10 +1,10 @@
-import React from 'react';
+
 
 interface TimerProgressProps {
   progress: number;
 }
 
-export const TimerProgress: React.FC<TimerProgressProps> = ({ progress }) => (
+export const TimerProgress = ({ progress }: TimerProgressProps) => (
   <div
     className="w-full bg-gray-200 rounded-full h-2 mb-4"
     role="progressbar"

@@ -40,6 +40,10 @@ describe('TimerItem', () => {
         createdAt: Date.now(),
     };
 
+    const renderTimerItem = (props = {}) => {
+        return render(<TimerItem timer={{ ...defaultTimer, ...props }} />);
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         (useTimerStore as any).mockReturnValue({
@@ -51,7 +55,7 @@ describe('TimerItem', () => {
     });
 
     it('renders timer details correctly', () => {
-        render(<TimerItem timer={defaultTimer} />);
+        renderTimerItem();
 
         expect(screen.getByText('Test Timer')).toBeInTheDocument();
         expect(screen.getByText('Test Description')).toBeInTheDocument();
@@ -60,7 +64,7 @@ describe('TimerItem', () => {
 
     it('toggles timer when start button is clicked', async () => {
         const user = userEvent.setup();
-        render(<TimerItem timer={defaultTimer} />);
+        renderTimerItem();
 
         const startButton = screen.getByRole('button', { name: /^start timer$/i });
         await user.click(startButton);
@@ -70,7 +74,7 @@ describe('TimerItem', () => {
 
     it('opens edit modal when edit button is clicked', async () => {
         const user = userEvent.setup();
-        render(<TimerItem timer={defaultTimer} />);
+        renderTimerItem();
 
         const editButton = screen.getByRole('button', { name: /edit timer/i });
         await user.click(editButton);
@@ -80,7 +84,7 @@ describe('TimerItem', () => {
 
     it('restarts timer and resets time display when restart button is clicked', async () => {
         const user = userEvent.setup();
-        render(<TimerItem timer={{ ...defaultTimer, remainingTime: 10, isRunning: false }} />);
+        renderTimerItem({ remainingTime: 10, isRunning: false });
 
         expect(screen.getByText('00:10')).toBeInTheDocument();
 
@@ -93,7 +97,7 @@ describe('TimerItem', () => {
 
     it('decrements time locally when running', async () => {
         vi.useFakeTimers();
-        render(<TimerItem timer={{ ...defaultTimer, isRunning: true }} />);
+        renderTimerItem({ isRunning: true });
 
         expect(screen.getByText('01:00')).toBeInTheDocument();
 

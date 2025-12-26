@@ -5,8 +5,12 @@ import React from 'react';
 import '@testing-library/jest-dom';
 
 describe('TimerProgress', () => {
+    const renderTimerProgress = (props: { progress: number }) => {
+        return render(<TimerProgress {...props} />);
+    };
+
     it('renders progress bar with correct accessibility attributes', () => {
-        render(<TimerProgress progress={50} />);
+        renderTimerProgress({ progress: 50 });
 
         const progressBar = screen.getByLabelText(/timer progress/i);
         expect(progressBar).toBeInTheDocument();
@@ -16,14 +20,14 @@ describe('TimerProgress', () => {
     });
 
     it('renders progress bar width visibly', () => {
-        render(<TimerProgress progress={75} />);
+        renderTimerProgress({ progress: 75 });
         const progressBar = screen.getByLabelText(/timer progress/i);
         const innerBar = progressBar.firstElementChild;
         expect(innerBar).toHaveStyle({ width: '75%' });
     });
 
     it('updates aria-valuenow when progress changes', () => {
-        const { rerender } = render(<TimerProgress progress={20} />);
+        const { rerender } = renderTimerProgress({ progress: 20 });
         let progressBar = screen.getByLabelText(/timer progress/i);
         expect(progressBar).toHaveAttribute('aria-valuenow', '20');
 

@@ -12,29 +12,34 @@ describe('TimerControls', () => {
     isRunning: false
   };
 
+  const renderTimerControls = (props = {}) => {
+    return render(<TimerControls {...defaultProps} {...props} />);
+  };
+
+
   it('displays Start button correctly when timer is paused (Non-Reset State)', () => {
-    render(<TimerControls {...defaultProps} isRunning={false} />);
+    renderTimerControls({ isRunning: false });
 
     const startButton = screen.getByRole('button', { name: /start timer/i });
     expect(startButton).toBeInTheDocument();
   });
 
   it('displays Pause button correctly when timer is running', () => {
-    render(<TimerControls {...defaultProps} isRunning={true} />);
+    renderTimerControls({ isRunning: true });
 
     const pauseButton = screen.getByRole('button', { name: /pause timer/i });
     expect(pauseButton).toBeInTheDocument();
   });
 
   it('displays Restart button correctly when timer is completed', () => {
-    render(<TimerControls {...defaultProps} isRunning={false} remainingTime={0} />);
+    renderTimerControls({ isRunning: false, remainingTime: 0 });
 
     const restartButton = screen.getByRole('button', { name: /restart timer/i });
     expect(restartButton).toBeInTheDocument();
   });
 
   it('toggles between Start and Pause buttons based on prop changes', () => {
-    const { rerender } = render(<TimerControls {...defaultProps} isRunning={false} />);
+    const { rerender } = renderTimerControls({ isRunning: false });
 
     expect(screen.getByRole('button', { name: /start timer/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /pause timer/i })).not.toBeInTheDocument();
@@ -50,7 +55,7 @@ describe('TimerControls', () => {
   });
 
   it('transitions from Restart to Start button based on prop changes', () => {
-    const { rerender } = render(<TimerControls {...defaultProps} isRunning={false} remainingTime={0} />);
+    const { rerender } = renderTimerControls({ isRunning: false, remainingTime: 0 });
 
     expect(screen.getByRole('button', { name: /restart timer/i })).toBeInTheDocument();
 

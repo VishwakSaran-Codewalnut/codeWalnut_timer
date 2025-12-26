@@ -1,4 +1,3 @@
-import React from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { Button } from './shared/Button';
 
@@ -9,12 +8,12 @@ interface TimerControlsProps {
   onRestart: () => void;
 }
 
-export const TimerControls: React.FC<TimerControlsProps> = ({
+export const TimerControls = ({
   isRunning,
   remainingTime,
   onToggle,
   onRestart,
-}) => {
+}: TimerControlsProps) => {
   const isCompleted = remainingTime <= 0;
 
   const COMPLETED_CLASS = "p-3 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors";
