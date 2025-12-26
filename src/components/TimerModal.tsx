@@ -88,7 +88,7 @@ export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
     }, [hours, minutes, seconds]);
 
     const isTitleValid = useMemo(() => {
-        return title.trim().length > 0 && title.length <= 50;
+        return title.trim().length > 0 && title.trim().length <= 50;
     }, [title]);
 
     const handleClose = (): void => {
