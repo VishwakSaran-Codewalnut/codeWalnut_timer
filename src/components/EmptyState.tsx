@@ -1,6 +1,6 @@
-import React from 'react';
 
-export const EmptyState: React.FC = () => (
+
+export const EmptyState = () => (
   <svg
     className="w-64 h-64 mb-4 text-gray-300"
     viewBox="0 0 24 24"

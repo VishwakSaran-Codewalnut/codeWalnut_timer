@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Clock } from 'lucide-react';
 import { Button } from './shared/Button';
 import { Timer } from '../types/timer';
@@ -14,7 +14,7 @@ interface TimerModalProps {
     timer?: Timer;
 }
 
-export const TimerModal: FC<TimerModalProps> = ({ isOpen, onClose, timer }) => {
+export const TimerModal = ({ isOpen, onClose, timer }: TimerModalProps) => {
     const isEditing = Boolean(timer);
 
     // State for form fields
