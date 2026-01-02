@@ -1,10 +1,12 @@
+import React from 'react';
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     label?: string;
     variant?: 'primary' | 'secondary' | 'unstyled'; // Add 'unstyled'
     className?: string;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+const ButtonBase: React.FC<ButtonProps> = ({
     label,
     onClick,
     type = 'button',
@@ -36,3 +38,5 @@ export const Button: React.FC<ButtonProps> = ({
         </button>
     );
 };
+
+export const Button = React.memo(ButtonBase);

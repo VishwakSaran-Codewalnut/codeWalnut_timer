@@ -133,12 +133,17 @@ export const TimerModal = ({ isOpen, onClose, timer }: TimerModalProps) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+            <div
+                className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-title"
+            >
                 {/* Modal Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
                         <Clock className="w-5 h-5 text-blue-600" />
-                        <h2 className="text-xl font-semibold">
+                        <h2 id="modal-title" className="text-xl font-semibold">
                             {isEditingExistingTimer ? 'Edit Timer' : 'Add New Timer'}
                         </h2>
                     </div>
@@ -146,6 +151,7 @@ export const TimerModal = ({ isOpen, onClose, timer }: TimerModalProps) => {
                         onClick={handleCloseTimerModal}
                         variant="unstyled"
                         className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                        aria-label="Close modal"
                     >
                         <X className="w-5 h-5" />
                     </Button>

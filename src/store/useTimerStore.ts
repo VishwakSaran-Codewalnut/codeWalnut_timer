@@ -5,8 +5,19 @@ import { Timer } from '../types/timer';
 const LOCAL_STORAGE_KEY = 'timers';
 
 const loadTimersFromLocalStorage = (): Timer[] => {
-  const storedTimers = localStorage.getItem(LOCAL_STORAGE_KEY);
-  return storedTimers ? JSON.parse(storedTimers) : [];
+  try {
+    const storedTimers = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!storedTimers) return [];
+
+    return JSON.parse(storedTimers).map((timer: Timer) => ({
+      ...timer,
+      isRunning: false,
+      endTime: undefined
+    }));
+  } catch (error) {
+    console.error("Failed to load timers from local storage", error);
+    return [];
+  }
 };
 
 const saveTimersToLocalStorage = (timers: Timer[]) => {
