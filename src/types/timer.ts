@@ -5,5 +5,6 @@ export interface Timer {
   duration: number; // in seconds
   remainingTime: number;
   isRunning: boolean;
+  endTime?: number;
   createdAt: number;
 }

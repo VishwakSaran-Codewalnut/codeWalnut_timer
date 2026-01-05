@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { calculateTotalSecondsFromHoursMinutesSeconds } from './time';
 
 export interface TimerFormData {
   title: string;
@@ -10,14 +11,9 @@ export interface TimerFormData {
 
 export const validateTimerForm = (data: TimerFormData): boolean => {
   const { title, hours, minutes, seconds } = data;
-  
+
   if (!title.trim()) {
     toast.error('Title is required');
-    return false;
-  }
-
-  if (title.length > 50) {
-    toast.error('Title must be less than 50 characters');
     return false;
   }
 
@@ -31,7 +27,7 @@ export const validateTimerForm = (data: TimerFormData): boolean => {
     return false;
   }
 
-  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  const totalSeconds = calculateTotalSecondsFromHoursMinutesSeconds(hours, minutes, seconds);
   if (totalSeconds === 0) {
     toast.error('Please set a time greater than 0');
     return false;
@@ -43,4 +39,8 @@ export const validateTimerForm = (data: TimerFormData): boolean => {
   }
 
   return true;
+};
+
+export const validateTimerDurationState = (hours: number, minutes: number, seconds: number): boolean => {
+  return hours > 0 || minutes > 0 || seconds > 0;
 };

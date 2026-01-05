@@ -5,8 +5,19 @@ import { Timer } from '../types/timer';
 const LOCAL_STORAGE_KEY = 'timers';
 
 const loadTimersFromLocalStorage = (): Timer[] => {
-  const storedTimers = localStorage.getItem(LOCAL_STORAGE_KEY);
-  return storedTimers ? JSON.parse(storedTimers) : [];
+  try {
+    const storedTimers = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!storedTimers) return [];
+
+    return JSON.parse(storedTimers).map((timer: Timer) => ({
+      ...timer,
+      isRunning: false,
+      endTime: undefined
+    }));
+  } catch (error) {
+    console.error("Failed to load timers from local storage", error);
+    return [];
+  }
 };
 
 const saveTimersToLocalStorage = (timers: Timer[]) => {
@@ -28,25 +39,39 @@ const timerSlice = createSlice({
         createdAt: Date.now(),
       };
       state.timers.push(newTimer);
-      saveTimersToLocalStorage(state.timers); 
+      saveTimersToLocalStorage(state.timers);
     },
     deleteTimer: (state, action) => {
       state.timers = state.timers.filter(timer => timer.id !== action.payload);
-      saveTimersToLocalStorage(state.timers); 
+      saveTimersToLocalStorage(state.timers);
     },
     toggleTimer: (state, action) => {
       const timer = state.timers.find(timer => timer.id === action.payload);
       if (timer) {
+        if (timer.isRunning) {
+          if (timer.endTime) {
+            const now = Date.now();
+            const remaining = Math.max(0, Math.ceil((timer.endTime - now) / 1000));
+            timer.remainingTime = remaining;
+            timer.endTime = undefined;
+          }
+        } else {
+          timer.endTime = Date.now() + (timer.remainingTime * 1000);
+        }
         timer.isRunning = !timer.isRunning;
         saveTimersToLocalStorage(state.timers);
       }
     },
     updateTimer: (state, action) => {
       const timer = state.timers.find(timer => timer.id === action.payload);
-      if (timer && timer.isRunning) {
-        timer.remainingTime = Math.max(0, timer.remainingTime - 1); 
-        timer.isRunning = timer.remainingTime > 0; 
-        saveTimersToLocalStorage(state.timers); 
+      if (timer && timer.isRunning && timer.endTime) {
+        const now = Date.now();
+        if (now >= timer.endTime) {
+          timer.remainingTime = 0;
+          timer.isRunning = false;
+          timer.endTime = undefined;
+          saveTimersToLocalStorage(state.timers);
+        }
       }
     },
     restartTimer: (state, action) => {
@@ -54,7 +79,8 @@ const timerSlice = createSlice({
       if (timer) {
         timer.remainingTime = timer.duration;
         timer.isRunning = false;
-        saveTimersToLocalStorage(state.timers); 
+        timer.endTime = undefined;
+        saveTimersToLocalStorage(state.timers);
       }
     },
     editTimer: (state, action) => {
@@ -66,8 +92,9 @@ const timerSlice = createSlice({
           duration: duration ?? timer.duration,
           remainingTime: duration ?? timer.remainingTime,
           isRunning: false,
+          endTime: undefined
         });
-        saveTimersToLocalStorage(state.timers); 
+        saveTimersToLocalStorage(state.timers);
       }
     },
   },
