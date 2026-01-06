@@ -4,13 +4,17 @@ import { TimerList } from './components/TimerList';
 import { Toaster } from 'sonner';
 import { Button } from './components/shared/Button';
 import { TimerModal } from './components/TimerModal';
-import { useTimerStore } from './store/useTimerStore';
+
+
 
 function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toasterPosition, setToasterPosition] = useState<'top-right' | 'bottom-center'>(
     'top-right'
   );
+
+
+
 
   useEffect(() => {
     const handleResize = () => {

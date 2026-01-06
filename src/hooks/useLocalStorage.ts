@@ -1,0 +1,46 @@
+import { useState, useEffect } from 'react';
+
+export function readFromStorage<T>(key: string, initialValue: T): T {
+    if (typeof window === 'undefined') {
+        return initialValue;
+    }
+
+    try {
+        const item = window.localStorage.getItem(key);
+        return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+        console.warn(`Error reading localStorage key "${key}":`, error);
+        return initialValue;
+    }
+}
+
+export function saveToStorage<T>(key: string, value: T) {
+    try {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(key, JSON.stringify(value));
+        }
+    } catch (error) {
+        console.warn(`Error setting localStorage key "${key}":`, error);
+    }
+}
+
+export function useLocalStorage<T>(key: string, initialValue: T) {
+    const [storedValue, setStoredValue] = useState<T>(() => readFromStorage(key, initialValue));
+
+    const setValue = (value: T | ((val: T) => T)) => {
+        try {
+            const valueToStore = value instanceof Function ? value(storedValue) : value;
+            setStoredValue(valueToStore);
+            saveToStorage(key, valueToStore);
+        } catch (error) {
+            console.warn(`Error setting localStorage key "${key}":`, error);
+        }
+    };
+
+    useEffect(() => {
+        setStoredValue(readFromStorage(key, initialValue));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return [storedValue, setValue] as const;
+}
