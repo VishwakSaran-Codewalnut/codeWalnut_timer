@@ -14,6 +14,16 @@ export function readFromStorage<T>(key: string, initialValue: T): T {
     }
 }
 
+export function saveToStorage<T>(key: string, value: T) {
+    try {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(key, JSON.stringify(value));
+        }
+    } catch (error) {
+        console.warn(`Error setting localStorage key "${key}":`, error);
+    }
+}
+
 export function useLocalStorage<T>(key: string, initialValue: T) {
     const [storedValue, setStoredValue] = useState<T>(() => readFromStorage(key, initialValue));
 
@@ -21,9 +31,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         try {
             const valueToStore = value instanceof Function ? value(storedValue) : value;
             setStoredValue(valueToStore);
-            if (typeof window !== 'undefined') {
-                window.localStorage.setItem(key, JSON.stringify(valueToStore));
-            }
+            saveToStorage(key, valueToStore);
         } catch (error) {
             console.warn(`Error setting localStorage key "${key}":`, error);
         }

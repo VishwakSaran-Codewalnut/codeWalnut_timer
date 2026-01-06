@@ -4,8 +4,8 @@ import { TimerList } from './components/TimerList';
 import { Toaster } from 'sonner';
 import { Button } from './components/shared/Button';
 import { TimerModal } from './components/TimerModal';
-import { useTimerStore } from './store/useTimerStore';
-import { useLocalStorage } from './hooks/useLocalStorage';
+
+
 
 function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,12 +13,8 @@ function Home() {
     'top-right'
   );
 
-  const { timers } = useTimerStore();
-  const [, setStoredTimers] = useLocalStorage('timers', timers);
 
-  useEffect(() => {
-    setStoredTimers(timers);
-  }, [timers, setStoredTimers]);
+
 
   useEffect(() => {
     const handleResize = () => {

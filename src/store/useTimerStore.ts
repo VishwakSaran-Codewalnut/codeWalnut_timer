@@ -2,7 +2,7 @@ import { configureStore, createSlice } from '@reduxjs/toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 import { Timer } from '../types/timer';
 
-import { readFromStorage } from '../hooks/useLocalStorage';
+import { readFromStorage, saveToStorage } from '../hooks/useLocalStorage';
 
 const LOCAL_STORAGE_KEY = 'timers';
 
@@ -62,6 +62,10 @@ const timerSlice = createSlice({
 
 const store = configureStore({
   reducer: timerSlice.reducer,
+});
+
+store.subscribe(() => {
+  saveToStorage(LOCAL_STORAGE_KEY, store.getState().timers);
 });
 
 export { store };
